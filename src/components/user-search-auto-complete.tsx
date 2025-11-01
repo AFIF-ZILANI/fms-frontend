@@ -57,7 +57,7 @@ export function SupplierSearch({ onChange }: SupplierSearchProps) {
           {part}
         </span>
       ) : (
-        part
+        <span className="text-black" key={i}>{part}</span>
       )
     );
   };
@@ -112,7 +112,7 @@ export function SupplierSearch({ onChange }: SupplierSearchProps) {
                     {highlightText(s.name, debouncedQuery)}
                   </span>
                   {s.company && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-600">
                       {highlightText(s.company, debouncedQuery)}
                     </span>
                   )}

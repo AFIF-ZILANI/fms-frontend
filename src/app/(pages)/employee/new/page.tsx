@@ -433,7 +433,7 @@ export default function Page() {
               className="w-full flex justify-center items-center gap-2"
             >
               {submitData.isPending && <Spinner />}
-              <span>Save Supplier</span>
+              <span>Add Employee</span>
             </Button>
           </form>
         </Form>

@@ -1,30 +1,11 @@
 "use client";
 
 import {
+  Table as TableTye,
   ColumnDef,
-  ColumnFiltersState,
   flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table";
 import { LuRefreshCcw } from "react-icons/lu";
-
-import {
-  AlertDialog,
-  AlertDialogActionDestructive,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 import {
   Table,
@@ -36,122 +17,66 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import React, { Dispatch, SetStateAction } from "react";
-import { FaTrash } from "react-icons/fa6";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  QueryObserverResult,
-  RefetchOptions,
-  UseMutateFunction,
-} from "@tanstack/react-query";
-import { DisplayBatch } from "./columns";
+import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
+import { DeleteDialog } from "@/components/table-delete-button";
+import { useDeleteBulkData } from "@/lib/api-request";
+import { Spinner } from "./ui/spinner";
 import toast from "react-hot-toast";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface DataTableProps<TData extends { id: string }, TValue = any> {
+  columns: ColumnDef<TData, TValue>[]; // ✅ TData here
+  table: TableTye<TData>; // ✅ Table uses the same TData
+  isPending?: boolean;
+  removeRowEndpoint: string;
   refetchFn: (
-    options?: RefetchOptions | undefined
+    options?: RefetchOptions
   ) => Promise<QueryObserverResult<unknown, Error>>;
-  mutateFn: UseMutateFunction<
-    unknown,
-    Error,
-    {
-      ids: string[] | number[];
-    },
-    unknown
-  >;
+  isFetching: boolean;
   setSkip: Dispatch<SetStateAction<number>>;
+  setTableData: React.Dispatch<React.SetStateAction<TData[]>>;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends { id: string }, TValue>({
   columns,
-  data,
-  mutateFn,
   refetchFn,
+  isFetching,
+  setTableData,
+  table,
+  removeRowEndpoint,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
-
+  const deleteFunc = useDeleteBulkData(removeRowEndpoint);
   function handleDelete() {
-    // Get all selected rows from the table
     const selectedRows = table.getSelectedRowModel().rows;
 
     if (selectedRows.length === 0) {
-      // console.log("No rows selected");
       toast.error("No rows selected");
-      return;
+      return [];
     }
 
-    // Map to actual IDs from your data
-    const selectedIds = selectedRows.map(
-      (row) => (row.original as DisplayBatch).id
-    );
-
-    // console.log("Selected IDs:", selectedIds);
-
-    // Call your mutation function
-    mutateFn({ ids: selectedIds });
+    const selectedIds = selectedRows.map((row) => row.original.id);
+    setTableData((prev) => prev.filter((row) => !selectedIds.includes(row.id)));
+    return selectedIds;
   }
-
   return (
     <div>
       <div className="flex items-center py-4">
         <div className="flex gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button className="cursor-pointer" variant={"outline"}>
-                <FaTrash />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  data and remove data from servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogActionDestructive onClick={handleDelete}>
-                  Delete
-                </AlertDialogActionDestructive>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <DeleteDialog
+            refetchFn={refetchFn}
+            handleDelete={handleDelete}
+            deleteFunc={deleteFunc}
+          />
           <Button
             variant={"outline"}
             className="cursor-pointer"
             onClick={() => refetchFn()}
+            disabled={isFetching}
           >
             <LuRefreshCcw />
           </Button>
@@ -236,6 +161,48 @@ export function DataTable<TData, TValue>({
       <div className="text-muted-foreground flex-1 text-sm mt-2">
         {table.getFilteredSelectedRowModel().rows.length} of{" "}
         {table.getFilteredRowModel().rows.length} row(s) selected.
+      </div>
+    </div>
+  );
+}
+
+export function DataTableComp<TData extends { id: string }, TValue>({
+  isPending,
+  table,
+  columns,
+  refetchFn,
+  setSkip,
+  setTableData,
+  isFetching,
+  removeRowEndpoint,
+}: DataTableProps<TData, TValue>) {
+  return (
+    <div className="py-6 px-4">
+      <div className="mx-auto w-[70rem]">
+        {isPending ? (
+          <div className="flex items-center gap-3">
+            <Spinner width={200} height={200} />
+            Loading...
+          </div>
+        ) : (
+          <>
+            <DataTable
+              table={table}
+              columns={columns}
+              setSkip={setSkip}
+              refetchFn={refetchFn}
+              setTableData={setTableData}
+              isFetching={isFetching}
+              removeRowEndpoint={removeRowEndpoint}
+            />
+            {isFetching && (
+              <div className="absolute bottom-1 right-4 flex items-center gap-2 text-sm text-gray-500 bg-white/70 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
+                <Spinner width={16} height={16} />
+                Refreshing...
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

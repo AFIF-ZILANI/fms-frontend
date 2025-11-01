@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type DisplaySupplier = {
+export type DisplayEmployee = {
   id: string;
   name: string;
   avatar: {
@@ -28,7 +28,7 @@ export type DisplaySupplier = {
   rating: number;
 };
 
-export const columns: ColumnDef<DisplaySupplier>[] = [
+export const columns: ColumnDef<DisplayEmployee>[] = [
   {
     id: "select",
     header: ({ table }) => {

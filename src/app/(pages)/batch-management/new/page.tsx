@@ -31,26 +31,17 @@ import { SupplierSearch } from "@/components/user-search-auto-complete";
 import { usePostData } from "@/lib/api-request";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-
-// ---- ENUM ----
-const birdBreeds = [
-  "Classic Cock",
-  "Hibreed",
-  "Pakisthani",
-  "Kedarnath",
-  "Faomi",
-  "Tiger",
-] as const;
+import toast from "react-hot-toast";
+import { Spinner } from "@/components/ui/spinner";
+import { BirdBreed } from "@/types/enum.type";
 
 // ---- VALIDATION SCHEMA ----
 const formSchema = z.object({
-  batch_name: z.string().min(1, "Batch name is required"),
   start_date: z.date(),
   expected_end_date: z.date(),
-  breed: z.enum(birdBreeds),
+  breed: z.enum(BirdBreed),
   received_quantity: z.number().min(1, "Must be at least 1"),
-  supplier_id: z.string().min(1, "Supplier ID is required"),
+  supplier_id: z.string(),
   house_no: z.number().min(1, "House number required"),
 });
 
@@ -60,37 +51,38 @@ export default function BatchForm() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      batch_name: "",
-      start_date: new Date(),
-      expected_end_date: new Date(),
-      breed: "Classic Cock",
-      received_quantity: 0,
+      start_date: undefined,
+      expected_end_date: undefined,
+      breed: undefined,
+      received_quantity: undefined,
       supplier_id: "",
-      house_no: 1,
+      house_no: undefined,
     },
   });
 
-  const { mutate, data, isPending, isSuccess, isError } =
+  const { mutate, data, isPending, isSuccess, isError, error } =
     usePostData("/batches/add");
   const router = useRouter();
 
   const onSubmit = (values: FormData) => {
-    console.log("Form Data:", values);
+    console.log("Form Data:", JSON.stringify(values));
     mutate(values);
   };
 
   useEffect(() => {
+    console.log("Hello");
     if (isSuccess) {
-      toast("New Batch Added Successfully!");
-      form.reset();
+      toast.success("New Batch Added Successfully!");
+      // form.reset();
       router.push("/batch-management");
     }
 
     if (isError) {
-      toast("Faild to Add New Batch!");
-      form.reset();
+      console.log(error);
+      toast.error("Faild to Add New Batch!");
+      // form.reset();
     }
-  }, [isError, isSuccess]);
+  }, [isError, isSuccess, isPending, data]);
 
   return (
     <div className="flex min-h-screen mt-8 justify-center">
@@ -107,21 +99,6 @@ export default function BatchForm() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 max-w-lg"
           >
-            {/* Batch Name */}
-            <FormField
-              control={form.control}
-              name="batch_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter batch name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* Start Date */}
             <FormField
               control={form.control}
@@ -148,7 +125,6 @@ export default function BatchForm() {
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -205,13 +181,14 @@ export default function BatchForm() {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select breed" />
+                        <SelectValue placeholder="Select Bird Breed" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {birdBreeds.map((b) => (
-                        <SelectItem key={b} value={b}>
-                          {b}
+                      {Object.values(BirdBreed).map((breed) => (
+                        <SelectItem key={breed} value={breed}>
+                          {breed.charAt(0) +
+                            breed.slice(1).toLowerCase().replace("_", " ")}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -275,9 +252,19 @@ export default function BatchForm() {
                   <FormLabel>House No</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      pattern="[0-9]*"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={field.value || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        // Allow only digits
+                        if (/^\d*$/.test(val)) {
+                          field.onChange(val === "" ? "" : Number(val));
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -286,7 +273,14 @@ export default function BatchForm() {
             />
 
             <Button type="submit" className="w-full">
-              Submit
+              {isPending ? (
+                <>
+                  <Spinner />
+                  Submiting...
+                </>
+              ) : (
+                "Submit"
+              )}
             </Button>
           </form>
         </Form>

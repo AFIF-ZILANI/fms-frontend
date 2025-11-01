@@ -50,7 +50,7 @@ export function SiteHeader() {
             <Link
               href={config.url}
               className="inline-block">
-                <Button className="cursor-pointer">{config.buttonText}</Button>
+                <Button className="cursor-pointer">Add New</Button>
             </Link>
           )}
           {/* <ThemeSelector/> */}
