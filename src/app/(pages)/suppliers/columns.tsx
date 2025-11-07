@@ -6,7 +6,11 @@ import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ContactMethod, SupplierRole, SupplierType } from "@/types/enum.type";
+import {
+  ContactMethod,
+  SupplierRole,
+  SupplierSupplyCategory,
+} from "@/types/enum.type";
 import { HoverAvatarEditButton } from "@/components/hover-avatar-edit-button";
 import { Label } from "@/components/ui/label";
 
@@ -24,7 +28,7 @@ export type DisplaySupplier = {
   email: string;
   mobile: string;
   company: string;
-  type: SupplierType;
+  type: SupplierSupplyCategory;
   role: SupplierRole;
   rating: number;
 };

@@ -55,15 +55,17 @@ export default function Page() {
   }, [data, isPending, isSuccess]);
 
   return (
-    <DataTableComp
-      table={table}
-      isFetching={isFetching}
-      isPending={isPending}
-      columns={columns}
-      setSkip={setSkip}
-      setTableData={setTableData}
-      refetchFn={refetch}
-      removeRowEndpoint="/suppliers/remove"
-    />
+    <div className="max-w-[70rem] mx-auto">
+      <DataTableComp
+        table={table}
+        isFetching={isFetching}
+        isPending={isPending}
+        columns={columns}
+        setSkip={setSkip}
+        setTableData={setTableData}
+        refetchFn={refetch}
+        removeRowEndpoint="/suppliers/remove"
+      />
+    </div>
   );
 }
