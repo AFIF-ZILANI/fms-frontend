@@ -20,32 +20,61 @@ type SupplierSearchProps = {
 
 export function SupplierSearch({ onChange }: SupplierSearchProps) {
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [showList, setShowList] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   );
+  const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([]);
+  const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  const { data, isLoading } = useGetData(
+  // Fetch all suppliers once (for initial dropdown)
+  const {
+    data: allData,
+    isLoading: isLoadingAll,
+    isSuccess,
+  } = useGetData("/suppliers/list");
+  const { data: searchData, isLoading: isSearching, isSuccess:isSearched } = useGetData(
     debouncedQuery ? `/suppliers?search=${debouncedQuery}` : ""
   );
 
-  // Debounce input (300ms)
+  // Initial load
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(query), 300);
-    if (data) {
-      setSuppliers((data as any).data);
-      console.log(data);
-    }
+    if (allData && isSuccess) setAllSuppliers((allData as any).data);
+  }, [allData, isSuccess]);
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 300);
     return () => clearTimeout(timer);
-  }, [query, data]);
+  }, [query]);
+
+  // Filter local suppliers first
+  useEffect(() => {
+    if (!query.trim()) {
+      setFilteredSuppliers(allSuppliers);
+      return;
+    }
+
+    const localMatches = allSuppliers.filter((s) =>
+      [s.name, s.company].some((field) =>
+        field?.toLowerCase().includes(query.toLowerCase())
+      )
+    );
+
+    if (localMatches.length > 0) {
+      setFilteredSuppliers(localMatches);
+    } else if (searchData && isSearched) {
+      // No local matches → show server results
+      setFilteredSuppliers((searchData as any).data);
+    }
+  }, [query, allSuppliers, searchData, isSearched]);
 
   const handleSelect = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setQuery(supplier.name);
-    onChange(supplier.id);
     setShowList(false);
+    onChange(supplier.id);
   };
 
   const highlightText = (text: string, search: string) => {
@@ -57,44 +86,41 @@ export function SupplierSearch({ onChange }: SupplierSearchProps) {
           {part}
         </span>
       ) : (
-        <span className="text-black" key={i}>{part}</span>
+        <span key={i} className="text-gray-700">{part}</span>
       )
     );
   };
 
   const showDropdown = useMemo(
     () =>
-      showList &&
-      (isLoading || suppliers.length > 0 || debouncedQuery.length > 0),
-    [showList, isLoading, suppliers, debouncedQuery]
+      showList && (isLoadingAll || isSearching || filteredSuppliers.length > 0),
+    [showList, isLoadingAll, isSearching, filteredSuppliers]
   );
 
   return (
     <div className="relative w-full">
-      <Input
-        placeholder="Search supplier..."
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setShowList(true);
-        }}
-        onFocus={() => setShowList(true)}
-        onBlur={() => setTimeout(() => setShowList(false), 200)}
-      />
+      <div className="relative" onClick={() => setShowList(true)}>
+        <Input
+          placeholder="Select supplier..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setShowList(true)}
+          onBlur={() => setTimeout(() => setShowList(false), 200)}
+        />
+      </div>
 
       {showDropdown && (
-        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-y-auto">
-          {isLoading ? (
+        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200  rounded-md shadow-lg max-h-64 overflow-y-auto">
+          {isLoadingAll || isSearching ? (
             <div className="p-3 text-gray-500 text-sm text-center">
-              Searching…
+              Loading…
             </div>
-          ) : suppliers.length === 0 ? (
+          ) : filteredSuppliers.length === 0 ? (
             <div className="p-3 text-gray-500 text-sm text-center">
               No suppliers found
             </div>
           ) : (
-            suppliers.length &&
-            suppliers.map((s) => (
+            filteredSuppliers.map((s) => (
               <div
                 key={s.id}
                 onClick={() => handleSelect(s)}
@@ -107,13 +133,13 @@ export function SupplierSearch({ onChange }: SupplierSearchProps) {
                   <AvatarImage src={s.avatar} alt={s.name} />
                   <AvatarFallback>{s.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex items-center justify-around gap-8">
+                <div className="flex flex-col">
                   <span className="text-sm">
-                    {highlightText(s.name, debouncedQuery)}
+                    {highlightText(s.name, query)}
                   </span>
                   {s.company && (
                     <span className="text-xs text-gray-600">
-                      {highlightText(s.company, debouncedQuery)}
+                      {highlightText(s.company, query)}
                     </span>
                   )}
                 </div>
