@@ -418,7 +418,7 @@ export default function Page() {
                         uploadedImage={uploadedImage}
                         setPublicId={setPublicId}
                         setUploadedImage={setUploadedImage}
-                        preset="emp"
+                        preset="temp"
                       />
                     </FormControl>
                     <FormMessage />
