@@ -17,13 +17,13 @@ export default function Uploadfile<T>({
   uploadedImage,
   preset = "temp",
 }: UploadfileProps) {
-  const fullPreset = `${process.env
-    .NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_BASE!}-${preset}`;
-    console.log(fullPreset)
+  // const fullPreset = `${process.env
+  //   .NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_BASE!}-${preset}`;
+    // console.log(fullPreset)
   return (
     <div className="flex items-center gap-2">
       <CldUploadWidget
-        uploadPreset={fullPreset}
+        uploadPreset={"fms-sup"}
         onSuccess={(result) => {
           // Type narrowing — Cloudinary always returns this shape on success
           const info = result?.info as {
