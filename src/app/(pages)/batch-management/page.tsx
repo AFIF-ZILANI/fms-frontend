@@ -55,7 +55,8 @@ export default function Page() {
     }
   }, [data, isPending, isSuccess]);
   return (
-    <DataTableComp
+    <div className="max-w-[70rem] mx-auto">
+      <DataTableComp
       table={table}
       isFetching={isFetching}
       isPending={isPending}
@@ -65,5 +66,6 @@ export default function Page() {
       refetchFn={refetch}
       removeRowEndpoint="/batches/remove"
     />
+    </div>
   );
 }
