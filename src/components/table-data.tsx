@@ -28,6 +28,7 @@ import { DeleteDialog } from "@/components/table-delete-button";
 import { useDeleteBulkData } from "@/lib/api-request";
 import { Spinner } from "./ui/spinner";
 import toast from "react-hot-toast";
+import { Skeleton } from "./ui/skeleton";
 
 interface DataTableProps<TData extends { id: string }, TValue = any> {
   columns: ColumnDef<TData, TValue>[]; // ✅ TData here
@@ -44,6 +45,7 @@ interface DataTableProps<TData extends { id: string }, TValue = any> {
 
 export function DataTable<TData extends { id: string }, TValue>({
   columns,
+  isPending,
   refetchFn,
   isFetching,
   setTableData,
@@ -178,30 +180,28 @@ export function DataTableComp<TData extends { id: string }, TValue>({
 }: DataTableProps<TData, TValue>) {
   return (
     <div className="py-6 px-4">
-      <div className="mx-auto w-[70rem]">
+      <div className="mx-auto relative">
         {isPending ? (
-          <div className="flex items-center gap-3">
-            <Spinner width={200} height={200} />
-            Loading...
-          </div>
+          <span className="flex items-center gap-2 py-8">
+            <Spinner />
+            <span>Loading...</span>
+          </span>
         ) : (
-          <>
-            <DataTable
-              table={table}
-              columns={columns}
-              setSkip={setSkip}
-              refetchFn={refetchFn}
-              setTableData={setTableData}
-              isFetching={isFetching}
-              removeRowEndpoint={removeRowEndpoint}
-            />
-            {isFetching && (
-              <div className="absolute bottom-1 right-4 flex items-center gap-2 text-sm text-gray-500 bg-white/70 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
-                <Spinner width={16} height={16} />
-                Refreshing...
-              </div>
-            )}
-          </>
+          <DataTable
+            table={table}
+            columns={columns}
+            setSkip={setSkip}
+            refetchFn={refetchFn}
+            setTableData={setTableData}
+            isFetching={isFetching}
+            removeRowEndpoint={removeRowEndpoint}
+          />
+        )}
+        {isFetching && (
+          <div className="absolute bottom-1 right-4 flex items-center gap-2 text-sm text-gray-500 bg-white/70 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
+            <Spinner width={16} height={16} />
+            Refreshing...
+          </div>
         )}
       </div>
     </div>
