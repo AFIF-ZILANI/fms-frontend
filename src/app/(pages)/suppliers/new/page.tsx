@@ -4,7 +4,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ContactMethod, SupplierRole, SupplierType } from "@/types/enum.type";
+import {
+  ContactMethod,
+  SupplierRole,
+  SupplierSupplyCategory,
+} from "@/types/enum.type";
 import {
   Form,
   FormField,
@@ -68,7 +72,7 @@ const formSchema = z.object({
   address: z.string().optional(),
   online_contact: z.array(z.nativeEnum(ContactMethod)).optional(),
   photo: z.string().optional(),
-  type: z.nativeEnum(SupplierType),
+  type: z.nativeEnum(SupplierSupplyCategory),
 });
 
 export default function Page() {
@@ -89,7 +93,7 @@ export default function Page() {
       email: "",
       photo: "",
       address: "",
-      type: SupplierType.NONE,
+      type: SupplierSupplyCategory.NONE,
     },
   });
   const methods = useMemo(() => Object.values(ContactMethod), []);
@@ -367,8 +371,10 @@ export default function Page() {
                         <SelectItem value={SupplierRole.NONE}>
                           Select Supplier Type
                         </SelectItem>
-                        {Object.values(SupplierType)
-                          .filter((type) => type !== SupplierType.NONE)
+                        {Object.values(SupplierSupplyCategory)
+                          .filter(
+                            (type) => type !== SupplierSupplyCategory.NONE
+                          )
                           .map((type) => (
                             <SelectItem key={type} value={type}>
                               {type.charAt(0) +
