@@ -32,13 +32,17 @@ const headerConfig: Record<string, { buttonText: string; url: string }> = {
     buttonText: "Add new Employee",
     url: "/employee/new",
   },
+  "/inventory-and-resources": {
+    buttonText: "Add new Item",
+    url: "/inventory-and-resources/new",
+  },
 };
 
 export function SiteHeader() {
   const pathname = usePathname();
   const config = headerConfig[pathname] || {};
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className=" sticky top-0 z-40 bg-background rounded-tl-2xl flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator
@@ -47,10 +51,10 @@ export function SiteHeader() {
         />
         <div className="ml-auto flex items-center gap-2">
           {config.buttonText && config.url && (
-            <Link
-              href={config.url}
-              className="inline-block">
-                <Button className="cursor-pointer">Add New</Button>
+            <Link href={config.url} className="inline-block">
+              <Button className="cursor-pointer" variant={"outline"}>
+                Add New
+              </Button>
             </Link>
           )}
           {/* <ThemeSelector/> */}
