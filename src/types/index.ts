@@ -75,3 +75,16 @@ export interface StockSummary {
   total_sales: number;
   critical_items: number;
 }
+
+export interface GlobalCardGroupData {
+  active_batches: number;
+  avarage_mortality_rate: string;
+  fcr: string;
+  total_expenses: string;
+  total_feed_stock: {
+    starter: number;
+    grower: number;
+  }
+  medicine_stock: number;
+}
+
